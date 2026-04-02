@@ -1,0 +1,49 @@
+--[[ V 1.0 DeDynamic
+		READ ME FOR INSTRUCTIONS:
+			This script should work to replace the new dynamic heads with the classic faces we all prefer. 
+			The way it works is it compares the MeshId of the dynamic heads to their classic face counterparts.
+			This means that not all faces are stored in the "Heads" Module which is parented to this script. I tried to add most of the Roblox made faces that were for sale on the catalog, but you will probably have to add any UGC faces.
+			You may have to add your own faces to it, and there are instructions in the "Heads" module under the "Main" that tell you how.
+			This script is not finalized as of now, so expect updates and changes to the script as time goes on, and keep up with everything on my youtube chanel.
+			There is a Config Module under the "Main" module 
+			
+			The faces that are marked as UNAVAILABLE are just not for sale on the catalog, and are either offsale or part of a package. 
+			I'm unable to access ROBLOX's inventory to fix that, and it's something I will have to fix in a future update.
+			
+		>>>	!!! MAKE SURE YOU HAVE HTTP SERVICES ENABLED IN YOUR GAME SETTINGS THE SCRIPT WILL NOT WORK OTHERWISE !!! <<<
+
+			Script by @lolBoiOnYoutube 3/28/2026 		
+			
+			Check out my YouTube channel and other projects!
+			
+		>>>	https://youtube.com/@thew_rblx?si=wJZDNqQaxYAkeHJm <<<
+
+--]]
+
+local mainModule = require(script:WaitForChild("Main"))
+
+local function init(player)
+	if player then
+		print(player.Name.." Has joined, searching for classic face.")
+		local foundFace = mainModule.FindFace(player)
+		if foundFace then
+			local newData = mainModule.AssignFace(player, foundFace)
+
+			mainModule.LoadFaceOnChar(player.Character, newData)
+
+			player.CharacterAdded:Connect(function(char)
+				mainModule.LoadFaceOnChar(char, newData)
+			end)
+		end
+	end
+end
+
+mainModule.LoadFaces()
+
+for i, player in pairs(game.Players:GetPlayers()) do
+	init(player)
+end
+
+game.Players.PlayerAdded:Connect(init)
+
+
