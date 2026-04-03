@@ -4,11 +4,10 @@
 -- This list should include every dynamic head currently for sale by Roblox on the catalog
 -- As of now, there are no UGC / Offsale faces available, soon to change.
 
--- to get the AssetId of the dynamic head just go to the catalog and find the dynamic head.
--- when you are on the dynamic head's page simply go to the URL and copy it
--- https://www.roblox.com/catalog/  >>> 13692999952 <<<  /Finn-McCool-Head
--- Finally, to find the classic face counterpart, go to the "All Classic Faces" folder under the main script and find the face in one of the folders.
--- copy the ColorMapContent of the decal under it
+-- to get the AssetId of the dynamic head just go to the roblox catalog and find the dynamic head.
+-- when you are on the dynamic head's page simply go to the URL and copy the asset id
+-- https://www.roblox.com/catalog/  >>> 13692999952 <<<  /Finn-McCool-Head (This number)
+-- Finally, to find the classic face counterpart, go to the "All Classic Faces" folder, or find a decal of the face and copy it's asset id.
 -- make sure you follow the format that is shown on line one, make sure the "Face Name" is between [] square brackets,
 -- and make sure the following two strings are between {} curly brackets
 -- I will leave a more in depth tutorial on my YouTube Channel
@@ -63,7 +62,7 @@ local HeadsToFaces = {
 	["Punk Face"] = {"73311057925154", "http://www.roblox.com/asset/?id=119768621 "};
 	["Clown Face"] = {"164640067601390", "http://www.roblox.com/asset/?id=23644832"};
 	
-	-----------------------------------------------------------------------------------------------------------------------------
+	Note: Anything marked UNAVAILABLE is either offsale or a part of a package ----------------------------------------------------------------------------------------------------------------------------- 
 	["$.$"] = {"UNAVAILABLE", "http://www.roblox.com/asset/?id=10747371"};
 	["-_-"] = {"UNAVAILABLE", "http://www.roblox.com/asset/?id=15637705"};
 	["8-Bit Heart Face"] = {"UNAVAILABLE", "rbxassetid://2568569786"};
