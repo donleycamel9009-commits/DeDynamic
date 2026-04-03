@@ -1,0 +1,220 @@
+-- DeDynamic Main Module
+-- 3/28/26
+local main = {}
+
+local headsTable = require(script:WaitForChild("Heads"))
+local configs = require(script:WaitForChild("Config"))
+
+local assetsFolder = script:WaitForChild("Assets")
+
+local InsertService = game:GetService("InsertService")
+local AssetService = game:GetService("AssetService")
+local Players = game:GetService("Players")
+local HttpService = game:GetService("HttpService")
+local Debris = game:GetService("Debris")
+
+local requests = 0
+
+local moduleVersion = "V1.0"
+
+function main.LoadFaces()
+	print("DeDynamic "..moduleVersion.." Is now Loading.")
+	
+	local totalLoaded = 0
+	local timer = 0
+	local finsished = false
+
+	task.spawn(function()
+		while finsished == false do
+			timer += 1
+			task.wait(1)
+		end
+	end)
+
+	for i, head in pairs(headsTable) do
+		if tonumber(head[1]) ~= nil then
+			local headAssetId = tonumber(head[1])
+			if not headAssetId then continue end
+
+			local headMeshId
+			local success, fail
+
+			repeat
+				success, fail = pcall(function()
+					headMeshId = AssetService:GetBundleDetailsAsync(headAssetId)
+				end)
+
+				if not success then
+					if string.find(fail, "429") then
+						print("Cooling down...")
+						task.wait(3)
+					else
+						warn("Error on: "..i.." | " .. headAssetId .. " |: " .. fail)
+						break
+					end
+				end
+			until success
+
+			if success then
+				totalLoaded += 1
+				head[1] = tostring(headMeshId["Items"][1]["Id"])
+				print("Loaded")
+				task.wait(0.05) 
+			end
+		end
+	end
+	
+	finsished = true
+
+	print("Loading complete: "..tostring(timer).." Seconds")
+end
+
+function main.FindFace(player:Player)
+	local humDesc = Players:GetHumanoidDescriptionFromUserIdAsync(player.UserId)
+
+	for i, head in pairs(headsTable) do
+		if tonumber(head[1]) ~= nil then
+			if tostring(head[1]) == tostring(humDesc.Head) then
+				if configs.DoPrint == true then print("Found Head") end
+
+				return head[2]
+			end
+		end
+	end
+end
+
+function main.AssignFace(player:Player, face:string)
+	local newDataFolder = Instance.new("Folder")
+	newDataFolder.Name = "PlayerFaceData"
+
+	local stringVal = Instance.new("StringValue")
+	stringVal.Value = face
+	stringVal.Name = "FaceTextureId"
+	stringVal.Parent = newDataFolder
+
+	newDataFolder.Parent = player
+
+	if configs.ShowGui == true then
+		task.spawn(function()
+			for i, player in pairs(Players:GetPlayers()) do
+				local newGui = assetsFolder:FindFirstChild("DDGui"):Clone()
+				newGui.Parent = player:WaitForChild("PlayerGui")
+
+				newGui.Frame.Main.Text = "DeDynamic "..moduleVersion.." Loaded"
+				newGui.Frame.Position = UDim2.new(-0.225,0,0.1,0)
+
+				newGui.Frame:TweenPosition(UDim2.new(0,0,0.1,0), Enum.EasingDirection.In, Enum.EasingStyle.Sine, 0.5)
+			end
+
+			assetsFolder.Notification:Play()
+			task.wait(5)
+
+			for i, player in pairs(Players:GetPlayers()) do
+				local gui = player.PlayerGui:FindFirstChild("DDGui")
+
+				if gui then
+					gui.Frame:TweenPosition(UDim2.new(-0.15,0,0.1,0), Enum.EasingDirection.In, Enum.EasingStyle.Sine, 0.5)
+					Debris:AddItem(gui, 0.5)
+				end
+			end
+		end)
+	end
+
+	return newDataFolder
+end
+
+function main.LoadFaceOnChar(char, faceData:Folder)
+	if char:FindFirstChild("Humanoid") then
+		local hum = char:FindFirstChild("Humanoid")
+		local humDesc = hum:GetAppliedDescription()
+
+		if hum.RigType == Enum.HumanoidRigType.R15 then
+			char.Head:Destroy()
+			if configs.DoPrint == true then print("R15") end
+			local newHead = Instance.new("Part")
+			newHead.Size = Vector3.new(2,1,1)
+			newHead.Name = "Head"
+			newHead.Parent = char
+			newHead.BrickColor = char["Body Colors"].HeadColor
+
+			local newHeadMesh = Instance.new("SpecialMesh")
+			newHeadMesh.MeshType = Enum.MeshType.Head
+			newHeadMesh.Scale = Vector3.new(1.25,1.25,1.25)
+			newHeadMesh.Parent = newHead
+
+			local originalSizeHead = Instance.new("Vector3Value")
+			originalSizeHead.Name = "OriginalSize"
+			originalSizeHead.Value = Vector3.new(1.25,1.25,1.25)
+			originalSizeHead.Parent = newHeadMesh
+
+			local newFaceDecal = Instance.new("Decal")
+			newFaceDecal.Face = "Front"
+			newFaceDecal.Texture = faceData.FaceTextureId.Value
+			newFaceDecal.Name = "Face"
+			newFaceDecal.Parent = newHead
+
+			local newNeck = Instance.new("Motor6D")
+			newNeck.Name = "Neck"
+
+			for i, attachment in pairs(script.HeadTemplates.R15.HeadAccessories:GetChildren()) do
+				attachment:Clone().Parent = newHead
+			end
+
+			newNeck.C0 = CFrame.new(0,0.9,0)
+			newNeck.C1 = CFrame.new(0,-0.5,0)
+			newNeck.Part0 = char.UpperTorso
+			newNeck.Part1 = newHead
+			newNeck.Parent = newHead
+
+			local accessoryList = humDesc:GetAccessories(true)
+
+			for i, accessory in pairs(accessoryList) do
+				print(accessory.AccessoryType)
+				if accessory.AccessoryType == Enum.AccessoryType.Face or accessory.AccessoryType == Enum.AccessoryType.Hat or accessory.AccessoryType == Enum.AccessoryType.Hair then
+					local newAccessory = InsertService:LoadAsset(accessory.AssetId)
+					newAccessory.Parent = char
+					hum:AddAccessory(newAccessory:FindFirstChildWhichIsA("Accessory"))
+					newAccessory:Destroy()
+				end
+			end
+
+		elseif hum.RigType == Enum.HumanoidRigType.R6 then
+			if configs.DoPrint == true then print("R6") print(humDesc.Head) end
+			local counter = 0
+			local headId 
+
+			repeat
+				humDesc = hum:GetAppliedDescription()
+				counter += 1
+				task.wait()
+			until
+			hum:GetAppliedDescription().Head ~= 0 or counter == 150
+			headId = hum:GetAppliedDescription().Head
+
+			if counter == 150 and configs.DoPrint == true then
+				print("No headId found, timing out and leaving face blank.")
+			end
+
+			char.Head.Mesh:Destroy()
+			char.Head.face:Destroy()
+			char.Head.Transparency = 1
+
+			local newHead = script.HeadTemplates.R6.Head:Clone()
+			newHead.CFrame = char.Head.CFrame
+			newHead.Name = "Mesh"
+
+			local headWeld = Instance.new("WeldConstraint")
+			headWeld.Name = "HeadWeld"
+			headWeld.Part0 = char.Head
+			headWeld.Part1 = newHead
+			headWeld.Parent = newHead
+
+			newHead.Parent = char.Head
+			newHead.BrickColor = char:WaitForChild("Body Colors").HeadColor
+
+			newHead.Face.Texture = faceData.FaceTextureId.Value
+		end
+	end
+end
+
+return main
